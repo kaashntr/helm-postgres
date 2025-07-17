@@ -4,29 +4,37 @@ metadata:
   name: {{ .Release.Name }}-postgres
   labels:
     app: postgres
-...
 spec:
-  containers:
-    - name: postgres
-      image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
-      env:
-        - name: POSTGRES_DB
-          value: {{ .Values.postgres.db | quote }}
-        - name: POSTGRES_USER
-          value: {{ .Values.postgres.user | quote }}
-        - name: POSTGRES_PASSWORD
-          value: {{ .Values.postgres.password | quote }}
-      ports:
-        - containerPort: 5432
-      volumeMounts:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.db | quote }}
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.user | quote }}
+            - name: POSTGRES_PASSWORD
+              value: {{ .Values.postgres.password | quote }}
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+      volumes:
         - name: postgres-data
-          mountPath: /var/lib/postgresql/data
+          persistentVolumeClaim:
+            claimName: postgres-pvc
         - name: init-sql
-          mountPath: /docker-entrypoint-initdb.d
-  volumes:
-    - name: postgres-data
-      persistentVolumeClaim:
-        claimName: postgres-pvc
-    - name: init-sql
-      configMap:
-        name: {{ .Release.Name }}-initdb
+          configMap:
+            name: {{ .Release.Name }}-initdb

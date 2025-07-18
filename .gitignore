@@ -1,1 +1,2 @@
-postgres-chart/files/*
+postgres-chart/files/*.dump
+postgres-chart/files/*.sql
